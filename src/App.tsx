@@ -16,8 +16,8 @@ function App() {
         <color attach="background" args={["#c3b7b7"]} />
         <Suspense fallback={<SpinLoader />}>
           <directionalLight position={[1, 1, 1]} intensity={1} />
-          <ambientLight intensity={8} />
-          <pointLight position={[10, 5, 10]} intensity={2} />
+          <ambientLight intensity={2} />
+          <pointLight position={[10, 5, 10]} intensity={1} />
           <spotLight
             position={[0, 50, 10]}
             angle={0.15}

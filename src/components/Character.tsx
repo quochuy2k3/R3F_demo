@@ -1,99 +1,64 @@
-// import { useRef, useEffect, useState } from "react";
-// import { useFrame } from "@react-three/fiber";
-// import { useGLTF, useAnimations } from "@react-three/drei";
-// import { Group, Vector3 } from "three";
-// import lowPolyMale from '../assets/low_poly_male.glb';
-// import { useKeyboardControls } from "../hook/keyBoardCtrol";
-// import * as THREE from 'three';
-
-// export function LowPolyMale() {
-//   const modelRef = useRef<Group>(null);
-//   const keys = useKeyboardControls();
-//   const { scene, animations } = useGLTF(lowPolyMale);
-//   const { actions } = useAnimations(animations, modelRef);
-
-  
-//   const walkingAction = actions['walking'];
-
-  
-
-//   useFrame(({ camera }) => {
-//     // Take the pressKey 
-//     if (modelRef.current) {
-//       const speed = 0.06;
-//       const direction = new Vector3();
-//       modelRef.current.getWorldDirection(direction);
-
-//       const currentMoving = keys["KeyW"] || keys["KeyS"] || keys["KeyA"] || keys["KeyD"] 
-
-//       if (keys["KeyW"]) {
-//         modelRef.current.position.add(direction.multiplyScalar(speed));
-//       }
-//       if (keys["KeyS"]) {
-//         modelRef.current.position.sub(direction.multiplyScalar(speed));
-//       }
-//       if (keys["KeyA"]) {
-//         modelRef.current.rotation.y += 0.05;
-//       }
-//       if (keys["KeyD"]) {
-//         modelRef.current.rotation.y -= 0.05;
-//       }
-//       // UnPress to stop
-//       if (currentMoving &&  walkingAction) {
-//         walkingAction.play();
-//       } else if (!currentMoving  && walkingAction) {
-//         walkingAction.stop(); 
-//       }
-
-//       // Cập nhật vị trí camera 
-//       camera.position.lerp(
-//         new Vector3(modelRef.current.position.x, modelRef.current.position.y + 2, modelRef.current.position.z + 5),
-//         0.1
-//       );
-//       camera.lookAt(modelRef.current.position);
-
-//       // Look scene behind
-//       // const cameraOffset = new Vector3(0, 2, 5); // Vị trí phía sau và trên cao của nhân vật
-//       // const cameraPosition = modelRef.current.position.clone().add(cameraOffset.applyQuaternion(modelRef.current.quaternion));
-
-//       // camera.position.lerp(cameraPosition, 0.1);
-//       // camera.lookAt(modelRef.current.position);
-//     }
-//   });
-
-//   return (
-//     <>
-//       <primitive object={scene} ref={modelRef} position={[0, 0, 0]} scale={[0.4, 0.4, 0.4]} />
-//     </>
-//   );
-// }
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useGLTF, useAnimations } from "@react-three/drei";
-import { Group, Vector3 } from "three";
+import { useAnimations, useFBX, useGLTF } from "@react-three/drei";
+import { Group, Vector3, AnimationMixer, LoopRepeat, Mesh, MeshStandardMaterial } from "three";
 import character from '../assets/character.glb';
+import walkAnimation from '../assets/CharactreWalk.fbx'; 
 import { useKeyboardControls } from "../hook/keyBoardCtrol";
-import { Clothes } from "./Clothes";
-
+import tShrit from '../assets/t_shirt.glb'
 export function LowPolyMale() {
   const characterRef = useRef<Group>(null);
+  const mixerRef = useRef<AnimationMixer | null>(null);
   const keys = useKeyboardControls();
-  
-  // Tải mô hình nhân vật và trang phục
-  const { scene: maleScene, animations } = useGLTF(character);
 
-  // Lấy các hành động hoạt ảnh từ mô hình nhân vật
-  const { actions } = useAnimations(animations, characterRef);
-  const walkingAction = actions['walking'];
+  // get model
+  const { scene: maleScene } = useGLTF(character);
+  const { scene: tShirt } = useGLTF(tShrit);
+  const { animations: characterWalk } = useFBX(walkAnimation);
+  const { actions } = useAnimations(characterWalk, characterRef);
+  const walkingAction = actions['mixamo.com'];
 
-  useFrame(({ camera }) => {
+  useEffect(() => {
+    if (characterRef.current && maleScene) {
+
+      // Remove out fit
+      // const removeOutfits = (object: any) => {
+      //   object.children.forEach((child: any) => {
+      //     if (child.name === 'Wolf3D_Outfit_Bottom' || child.name === 'Wolf3D_Outfit_Top') {
+      //       object.remove(child);
+      //     }
+      //     if (child.children.length > 0) {
+      //       removeOutfits(child);
+      //     }
+      //   });
+      // };
+      // removeOutfits(maleScene);
+      // removeOutfits(maleScene);
+      
+      maleScene.traverse((child) => {
+        if (child instanceof Mesh) {
+          if (child.name === 'Wolf3D_Outfit_Bottom' || child.name === 'Wolf3D_Outfit_Top') {
+            child.material = new MeshStandardMaterial({ color: 0xff0000 });
+          }
+        }
+      });
+
+      console.log(tShirt)
+      console.log(maleScene.children);
+            
+      // New mixer for animation
+      mixerRef.current = new AnimationMixer(maleScene);
+    }
+  }, [maleScene]);
+
+  useFrame(({ camera, clock }) => {
     if (characterRef.current) {
       const speed = 0.06;
       const direction = new Vector3();
       characterRef.current.getWorldDirection(direction);
-
       const currentMoving = keys["KeyW"] || keys["KeyS"] || keys["KeyA"] || keys["KeyD"];
 
+      // Điều chỉnh vị trí và hướng của nhân vật
       if (keys["KeyW"]) {
         characterRef.current.position.add(direction.multiplyScalar(speed));
       }
@@ -107,13 +72,28 @@ export function LowPolyMale() {
         characterRef.current.rotation.y -= 0.05;
       }
 
-      if (currentMoving && walkingAction) {
-        walkingAction.play();
-      } else if (!currentMoving && walkingAction) {
-        walkingAction.stop();
+      // Cập nhật hoạt ảnh
+      if (mixerRef.current) {
+        mixerRef.current.update(clock.getDelta());
       }
 
-      // Cập nhật vị trí camera 
+      // Điều chỉnh trạng thái hoạt ảnh dựa trên trạng thái di chuyển
+      if (walkingAction) {
+        if (currentMoving) {
+          walkingAction.play();
+          walkingAction.loop = LoopRepeat; 
+          walkingAction.timeScale = 1; // Điều chỉnh tốc độ nếu cần
+        } else {
+          walkingAction.stop();
+        }
+      }
+
+      // Look scene behind
+      // const cameraOffset = new Vector3(0, 2, 5); // Vị trí phía sau và trên cao của nhân vật
+      // const cameraPosition = modelRef.current.position.clone().add(cameraOffset.applyQuaternion(modelRef.current.quaternion));
+      // camera.position.lerp(cameraPosition, 0.1);
+
+      // New position of camera
       camera.position.lerp(
         new Vector3(characterRef.current.position.x, characterRef.current.position.y + 3, characterRef.current.position.z + 5),
         0.1
@@ -124,12 +104,7 @@ export function LowPolyMale() {
 
   return (
     <>
-      <primitive object={maleScene} ref={characterRef} position={[0, 0, 0]} scale={[1,1,1]} />
-      {/* <Clothes
-        modelRef={characterRef}
-        position={[0, 0, 0]}  // Ví dụ về vị trí của trang phục
-        scale={[3 , 1.78, 3]}    // Ví dụ về kích thước của trang phục
-      /> */}
+      <primitive object={maleScene} ref={characterRef} position={[0, 0, 0]} scale={[1, 1, 1]} />
     </>
   );
 }
