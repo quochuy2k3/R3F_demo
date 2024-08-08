@@ -69,8 +69,8 @@ export function Character({ useNewMaterial, changeOutfit }: CharacterProps) {
       
       // Add new T-shirt model to the character
       if (characterRef.current) {
-        // tShirtModel.position.set(0, -0.4, 0); // Adjust position
-        // tShirtModel.scale.set(3, 3, 3); // Adjust scale
+        tShirtModel.position.set(0, -0.4, 0); // Adjust position
+        tShirtModel.scale.set(3, 3, 3); // Adjust scale
         characterRef.current.add(tShirtModel);
       }
     }

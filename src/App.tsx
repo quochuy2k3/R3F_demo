@@ -38,7 +38,7 @@ function App() {
             intensity={2}
           />
         <Character useNewMaterial={useNewMaterial} changeOutfit={changeOutfit} />
-          <Experience />
+        <Experience />
         </Suspense>
       </Canvas>
       <div className="absolute top-4 left-4 z-10">
