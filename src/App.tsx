@@ -22,7 +22,6 @@ function App() {
     <section className="w-full h-screen relative">
       <Canvas
         camera={{
-          position: [5, 5, 10],  
           fov: 100,
         }}
       >

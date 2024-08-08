@@ -1,5 +1,5 @@
 import { useGLTF } from '@react-three/drei';
-import romanVsPersian from '../assets/Roman vs Persian.glb';
+import romanVsPersian from '../assets/gm_bigcity.glb';
 
 export const Experience = () => {
   const { scene } = useGLTF(romanVsPersian);

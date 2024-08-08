@@ -123,10 +123,10 @@ export function Character({ useNewMaterial, changeOutfit }: CharacterProps) {
         characterRef.current.position.sub(direction.multiplyScalar(speed));
       }
       if (keys["KeyA"]) {
-        characterRef.current.rotation.y += 0.05;
+        characterRef.current.rotation.y += 0.02;
       }
       if (keys["KeyD"]) {
-        characterRef.current.rotation.y -= 0.05;
+        characterRef.current.rotation.y -= 0.02;
       }
 
       // Update animation
@@ -147,9 +147,10 @@ export function Character({ useNewMaterial, changeOutfit }: CharacterProps) {
       // Update camera position
 
       // Look scene behind
-      const cameraOffset = new Vector3(0, 2.5, -2); // Vị trí phía sau và trên cao của nhân vật
+      const cameraOffset = new Vector3(0, 2.6, -3); // Vị trí phía sau và trên cao của nhân vật
       const cameraPosition = characterRef.current.position.clone().add(cameraOffset.applyQuaternion(characterRef.current.quaternion));
       camera.position.lerp(cameraPosition, 0.1);
+
 
 
       // camera.position.lerp(
@@ -157,7 +158,7 @@ export function Character({ useNewMaterial, changeOutfit }: CharacterProps) {
       //   0.1
       // );
       
-      camera.lookAt(characterRef.current.position);
+      camera.lookAt(characterRef.current.position) ;
     }
   });
 
