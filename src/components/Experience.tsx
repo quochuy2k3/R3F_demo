@@ -1,13 +1,12 @@
-import { OrbitControls } from "@react-three/drei";
+import { useGLTF } from '@react-three/drei';
+import romanVsPersian from '../assets/Roman vs Persian.glb';
 
 export const Experience = () => {
+  const { scene } = useGLTF(romanVsPersian);
+
   return (
     <>
-      <OrbitControls />
-      <mesh position={[0, 1,-2]} >
-        <boxGeometry />
-        <meshNormalMaterial />
-      </mesh>
+      <primitive object={scene} />
     </>
   );
 };
