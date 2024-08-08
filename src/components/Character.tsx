@@ -7,8 +7,10 @@ import { useLoader } from "@react-three/fiber";
 import character from '../assets/character.glb'; // GLB file
 import walkAnimation from '../assets/CharactreWalk.fbx'; 
 import { useKeyboardControls } from "../hook/keyBoardCtrol";
-import tShirtPath from '../assets/OBJ.obj'; // Path to the .obj file
+// import tShirtPath from '../assets/OBJ.obj'; 
+import tShirtPath from '../assets/t_shirt.glb';
 import { OBJLoader } from "three/examples/jsm/Addons.js";
+
 interface CharacterProps {
   useNewMaterial: boolean;
   changeOutfit: boolean;
@@ -20,9 +22,11 @@ export function Character({ useNewMaterial, changeOutfit }: CharacterProps) {
   const mixerRef = useRef<AnimationMixer | null>(null);
   const keys = useKeyboardControls();
 
+  const { scene: tShirtModel } = useGLTF(tShirtPath);
+
   // Load models
   const { scene: maleScene } = useGLTF(character);
-  const tShirtModel = useLoader(OBJLoader, tShirtPath); 
+  // const tShirtModel = useLoader(OBJLoader, tShirtPath); 
   const { animations: characterWalk } = useFBX(walkAnimation);
   const { actions } = useAnimations(characterWalk, characterRef);
   const walkingAction = actions['mixamo.com'];
@@ -65,8 +69,8 @@ export function Character({ useNewMaterial, changeOutfit }: CharacterProps) {
       
       // Add new T-shirt model to the character
       if (characterRef.current) {
-        tShirtModel.position.set(0, -0.4, 0); // Adjust position
-        tShirtModel.scale.set(3, 3, 3); // Adjust scale
+        // tShirtModel.position.set(0, -0.4, 0); // Adjust position
+        // tShirtModel.scale.set(3, 3, 3); // Adjust scale
         characterRef.current.add(tShirtModel);
       }
     }
