@@ -1,19 +1,28 @@
+
 import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useAnimations, useFBX, useGLTF } from "@react-three/drei";
-import { Group, Vector3, AnimationMixer, LoopRepeat, Mesh, MeshStandardMaterial } from "three";
-import character from '../assets/character.glb';
+import { Group, Vector3, AnimationMixer, LoopRepeat, Mesh, MeshStandardMaterial, Object3D,  } from "three";
+import { useLoader } from "@react-three/fiber";
+import character from '../assets/character.glb'; // GLB file
 import walkAnimation from '../assets/CharactreWalk.fbx'; 
 import { useKeyboardControls } from "../hook/keyBoardCtrol";
-import tShrit from '../assets/t_shirt.glb'
-export function LowPolyMale() {
+import tShirtPath from '../assets/OBJ.obj'; // Path to the .obj file
+import { OBJLoader } from "three/examples/jsm/Addons.js";
+interface CharacterProps {
+  useNewMaterial: boolean;
+  changeOutfit: boolean;
+}
+
+
+export function Character({ useNewMaterial, changeOutfit }: CharacterProps) {
   const characterRef = useRef<Group>(null);
   const mixerRef = useRef<AnimationMixer | null>(null);
   const keys = useKeyboardControls();
 
-  // get model
+  // Load models
   const { scene: maleScene } = useGLTF(character);
-  const { scene: tShirt } = useGLTF(tShrit);
+  const tShirtModel = useLoader(OBJLoader, tShirtPath); 
   const { animations: characterWalk } = useFBX(walkAnimation);
   const { actions } = useAnimations(characterWalk, characterRef);
   const walkingAction = actions['mixamo.com'];
@@ -21,35 +30,79 @@ export function LowPolyMale() {
   useEffect(() => {
     if (characterRef.current && maleScene) {
 
-      // Remove out fit
-      // const removeOutfits = (object: any) => {
-      //   object.children.forEach((child: any) => {
-      //     if (child.name === 'Wolf3D_Outfit_Bottom' || child.name === 'Wolf3D_Outfit_Top') {
-      //       object.remove(child);
-      //     }
-      //     if (child.children.length > 0) {
-      //       removeOutfits(child);
-      //     }
-      //   });
-      // };
-      // removeOutfits(maleScene);
-      // removeOutfits(maleScene);
-      
+     if (useNewMaterial) {
       maleScene.traverse((child) => {
         if (child instanceof Mesh) {
-          if (child.name === 'Wolf3D_Outfit_Bottom' || child.name === 'Wolf3D_Outfit_Top') {
-            child.material = new MeshStandardMaterial({ color: 0xff0000 });
+          if (child.name === 'Wolf3D_Outfit_Top') {
+            child.material = new MeshStandardMaterial({ color: 0x00ff00 });
           }
         }
       });
+    }else {  maleScene.traverse((child) => {
+      if (child instanceof Mesh) {
+        if (child.name === 'Wolf3D_Outfit_Top') {
+          child.material = new MeshStandardMaterial({ color: 0xffffff });
+        }
+      }
+    }); }
 
-      console.log(tShirt)
-      console.log(maleScene.children);
-            
-      // New mixer for animation
+
+      // Option 2
+
+      // Remove old outfit if needed
+  if (changeOutfit) {
+      const removeOutfits = (object: Object3D) => {
+        object.children.forEach((child) => {
+          if (child.name === 'Wolf3D_Outfit_Top') {
+            object.remove(child);
+          }
+          if (child.children.length > 0) {
+            removeOutfits(child);
+          }
+        });
+      };
+      removeOutfits(maleScene);
+      
+      // Add new T-shirt model to the character
+      if (characterRef.current) {
+        tShirtModel.position.set(0, -0.4, 0); // Adjust position
+        tShirtModel.scale.set(3, 3, 3); // Adjust scale
+        characterRef.current.add(tShirtModel);
+      }
+    }
+    //take skeleton 
+    // if (maleScene && tShirtModel) {
+    //   const meshes: Mesh[] = [];
+    //   tShirtModel.traverse((child) => {
+    //     if ((child as Mesh).isMesh) {
+    //       meshes.push(child as Mesh);
+    //     }
+    //   });
+     
+    //   //Merge all geometry
+    //   const geometries = meshes.map(mesh => mesh.geometry);
+    //   const mergedGeometry = mergeGeometries(geometries);
+    //   const material = meshes.length > 0 ? meshes[0].material : new MeshStandardMaterial();
+    //   const skinnedTShirt = new SkinnedMesh(mergedGeometry, material);
+     
+    //   //Add skeleton from maleScene to skinnedTShirt
+    //   //Add skinnedTShirt to maleScene
+    //   maleScene.traverse((child) => {
+    //    if ((child as Mesh).isMesh && child.name === 'Wolf3D_Outfit_Top') {
+    //   skinnedTShirt.skeleton = child.skeleton;
+    //      maleScene.remove(child);
+    //      skinnedTShirt.name = 'NewTShirtMeshName';
+    //      console.log(skinnedTShirt.geometry);
+    //      const mesh = child as Mesh;
+    //      console.log(mesh.geometry);
+        
+    //    }
+    //  });
+
+      // Set up the animation mixer
       mixerRef.current = new AnimationMixer(maleScene);
     }
-  }, [maleScene]);
+  }, [maleScene, tShirtModel,useNewMaterial,changeOutfit]);
 
   useFrame(({ camera, clock }) => {
     if (characterRef.current) {
@@ -58,7 +111,7 @@ export function LowPolyMale() {
       characterRef.current.getWorldDirection(direction);
       const currentMoving = keys["KeyW"] || keys["KeyS"] || keys["KeyA"] || keys["KeyD"];
 
-      // Điều chỉnh vị trí và hướng của nhân vật
+      // Adjust position and direction of the character
       if (keys["KeyW"]) {
         characterRef.current.position.add(direction.multiplyScalar(speed));
       }
@@ -72,32 +125,34 @@ export function LowPolyMale() {
         characterRef.current.rotation.y -= 0.05;
       }
 
-      // Cập nhật hoạt ảnh
+      // Update animation
       if (mixerRef.current) {
         mixerRef.current.update(clock.getDelta());
       }
 
-      // Điều chỉnh trạng thái hoạt ảnh dựa trên trạng thái di chuyển
+      // Control walking animation
       if (walkingAction) {
         if (currentMoving) {
           walkingAction.play();
-          walkingAction.loop = LoopRepeat; 
-          walkingAction.timeScale = 1; // Điều chỉnh tốc độ nếu cần
+          walkingAction.loop = LoopRepeat;
+          walkingAction.timeScale = 1; 
         } else {
           walkingAction.stop();
         }
       }
+      // Update camera position
 
       // Look scene behind
-      // const cameraOffset = new Vector3(0, 2, 5); // Vị trí phía sau và trên cao của nhân vật
-      // const cameraPosition = modelRef.current.position.clone().add(cameraOffset.applyQuaternion(modelRef.current.quaternion));
-      // camera.position.lerp(cameraPosition, 0.1);
+      const cameraOffset = new Vector3(0, 2.5, -2); // Vị trí phía sau và trên cao của nhân vật
+      const cameraPosition = characterRef.current.position.clone().add(cameraOffset.applyQuaternion(characterRef.current.quaternion));
+      camera.position.lerp(cameraPosition, 0.1);
 
-      // New position of camera
-      camera.position.lerp(
-        new Vector3(characterRef.current.position.x, characterRef.current.position.y + 3, characterRef.current.position.z + 5),
-        0.1
-      );
+
+      // camera.position.lerp(
+      //   new Vector3(characterRef.current.position.x, characterRef.current.position.y + 3, characterRef.current.position.z + 5),
+      //   0.1
+      // );
+      
       camera.lookAt(characterRef.current.position);
     }
   });

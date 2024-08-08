@@ -1,16 +1,29 @@
 import { Canvas } from "@react-three/fiber";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import SpinLoader from "./components/SpinLoader";
-import { LowPolyMale } from "./components/Character";
+import { Character } from "./components/Character";
 import { Experience } from "./components/Experience";
 
 function App() {
+  const [useNewMaterial, setUseNewMaterial] = useState(false);
+  const [changeOutfit, setChangeOutfit] = useState(false); 
+
+  const handleChangeColor = () => {
+    setUseNewMaterial(!useNewMaterial);
+    console.log(useNewMaterial);
+    
+  };
+
+  // Hàm để thay đổi trang phục
+  const handleChangeOutfit = () => {
+    setChangeOutfit(prev => !prev);
+  };
   return (
     <section className="w-full h-screen relative">
       <Canvas
         camera={{
           position: [5, 5, 10],  
-          fov: 60,
+          fov: 100,
         }}
       >
         <color attach="background" args={["#c3b7b7"]} />
@@ -24,10 +37,24 @@ function App() {
             penumbra={1}
             intensity={2}
           />
-          <LowPolyMale />
+        <Character useNewMaterial={useNewMaterial} changeOutfit={changeOutfit} />
           <Experience />
         </Suspense>
       </Canvas>
+      <div className="absolute top-4 left-4 z-10">
+        <button 
+          onClick={handleChangeColor}
+          className="bg-blue-500 text-white py-2 px-4 rounded mr-2"
+        >
+          Change color
+        </button>
+        <button 
+          onClick={handleChangeOutfit}
+          className="bg-green-500 text-white py-2 px-4 rounded"
+        >
+          Change outfit
+        </button>
+      </div>
     </section>
   );
 }
